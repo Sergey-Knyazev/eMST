@@ -3,7 +3,7 @@ import java.util.*;
 class NearestNeighbourGraph {
     // The variable stores the number of nodes in the graph
     private int V = 0;
-    List<HashSet<Integer>> nearest_neighbour_graph(double[][] graph, int[] mst_parents) {
+    List<HashSet<Integer>> nearest_neighbour_graph(double[][] graph, int[] mst_parents, double epsilon) {
         V = graph.length;
         // build mst
         List<HashSet<Integer>> mst = new ArrayList<HashSet<Integer>>();
@@ -23,7 +23,7 @@ class NearestNeighbourGraph {
                 if(i!=j && graph[i][j]>0 && graph[i][j] < closest_neighbour_dist)
                     closest_neighbour_dist = graph[i][j];
             for(int j=0; j<V; ++j)
-                if(i!=j && graph[i][j]==closest_neighbour_dist) {
+                if(i!=j && graph[i][j]>=closest_neighbour_dist && graph[i][j] <= closest_neighbour_dist*(1.0+epsilon)) {
                     nng.get(i).add(j);
                     nng.get(j).add(i);
                 }

@@ -17,6 +17,10 @@ public class Main implements Runnable{
             description="output file with edges of nearest neighbour graph in CSV format",
             paramLabel = "FILE", required=true)
     private File outputFile;
+    @CommandLine.Option(names={"-e", "--epsilon"},
+            description="epsilon - an edge will be added in nn if its weight is only 1+e times greater than needed",
+            paramLabel = "e")
+    private double epsilon = 0.0;
 
     public void run() {
         try {
@@ -25,7 +29,7 @@ public class Main implements Runnable{
             HashMap<String, Integer> node_indices = nodes._1;
             HashMap<Integer, String> node_names = nodes._2;
             double[][] graph = get_distance_matrix(edges, node_indices);
-            List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph);
+            List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph, epsilon);
             export_graph(nng, graph, node_names, outputFile);
         }
         catch(FileNotFoundException e) {
@@ -36,11 +40,11 @@ public class Main implements Runnable{
     public static void main(String[] args) {
         CommandLine.run(new Main(), System.out, args);
     }
-    private static List<HashSet<Integer>> build_nearest_neighbour_graph(double[][] graph) {
+    private static List<HashSet<Integer>> build_nearest_neighbour_graph(double[][] graph, double epsilon) {
         MST t = new MST();
         int[] mst_parents = t.primMST(graph);
         NearestNeighbourGraph g = new NearestNeighbourGraph();
-        return g.nearest_neighbour_graph(graph, mst_parents);
+        return g.nearest_neighbour_graph(graph, mst_parents, epsilon);
     }
     private static List<String[]> load_edges(File file_name) throws FileNotFoundException{
         CsvParserSettings settings= new CsvParserSettings();

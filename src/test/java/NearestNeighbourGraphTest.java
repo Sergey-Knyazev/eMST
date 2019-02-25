@@ -11,13 +11,13 @@ class NearestNeighbourGraphTest {
     @Test
     void nearest_neighbour_graph() {
         double[][] a =
-                {{-1, 2, -1, 6, -1},
-                        {2, -1, 3, 8, 5},
-                        {-1, 3, -1, -1, 7},
-                        {6, 8, -1, -1, 9},
-                        {-1, 5, 7, 9, -1},
-                };
-        int[] b = {-1, 0, 1, 0, 1};
+                {{-1, 2, -1, 6, -1},            //   2      3
+                        {2, -1, 3, 8, 5},       //a------b-----c
+                        {-1, 3, -1, -1, 7},     //  \    | \   |
+                        {6, 8, -1, -1, 9},      //    \6 |8  \5|7
+                        {-1, 5, 7, 9, -1},      //       d-----e
+                };                              //          9
+        int[] b = {-1, 0, 1, 0, 1};     //MST
         NearestNeighbourGraph c = new NearestNeighbourGraph();
         List<HashSet<Integer>> d = new ArrayList<HashSet<Integer>>();
         d.add(new HashSet<Integer>());
@@ -26,7 +26,7 @@ class NearestNeighbourGraphTest {
             d.get(i).add(b[i]);
             d.get(b[i]).add(i);
         }
-        assertEquals(d, c.nearest_neighbour_graph(a, b));
+        assertEquals(d, c.nearest_neighbour_graph(a, b, 0.3));
         double[][] e =
                 {{-1, 2, -1, 6, -1},
                         {2, -1, 3, 8, 5},
@@ -36,7 +36,7 @@ class NearestNeighbourGraphTest {
                 };
         d.get(2).add(4);
         d.get(4).add(2);
-        assertEquals(d, c.nearest_neighbour_graph(e, b));
+        assertEquals(d, c.nearest_neighbour_graph(e, b, 0.0));
     }
 
     @Test
@@ -58,6 +58,6 @@ class NearestNeighbourGraphTest {
         }
         h.get(0).add(2);
         h.get(2).add(0);
-        assertEquals(h, c.nearest_neighbour_graph(f, g));
+        assertEquals(h, c.nearest_neighbour_graph(f, g, 0.0));
     }
 }

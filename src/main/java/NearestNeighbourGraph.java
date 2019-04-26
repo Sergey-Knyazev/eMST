@@ -16,6 +16,7 @@ class NearestNeighbourGraph {
         List<HashSet<Integer>> nng = new ArrayList<HashSet<Integer>>();
         for(int i=0; i<V; ++i)
             nng.add(new HashSet<Integer>());
+        /*
         // Add nearest neighbours to every node
         for(int i=0; i<V; ++i) {
             double closest_neighbour_dist = Double.MAX_VALUE;
@@ -34,7 +35,7 @@ class NearestNeighbourGraph {
                 nng.get(i).add(a);
                 nng.get(a).add(i);
             }
-        }
+        }*/
         // Add bridges between NN components
         double[][] longest_edge = new double[V][V];
         for(int i=0; i<V; ++i)
@@ -44,7 +45,7 @@ class NearestNeighbourGraph {
             bfs_update_matrix(mst, graph, i, longest_edge);
         for(int i=0; i<V; ++i) {
             for(int j=0; j<V; ++j) {
-                if(graph[i][j] == longest_edge[i][j]) {
+                if(graph[i][j] > 0 && graph[i][j] <= longest_edge[i][j]*(1.0+epsilon)) {
                     nng.get(i).add(j);
                     nng.get(j).add(i);
                 }

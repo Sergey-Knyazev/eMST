@@ -79,7 +79,7 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                     <appendAssemblyId>false</appendAssemblyId>
-                    <outputDirectory>../nn</outputDirectory>
+                    <outputDirectory>.</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>

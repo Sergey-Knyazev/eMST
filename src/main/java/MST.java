@@ -2,6 +2,7 @@
 // The program is for adjacency matrix representation of the graph
 
 import java.lang.*;
+import java.util.ArrayList;
 
 public class MST
 {
@@ -10,10 +11,11 @@ public class MST
 
     // A utility function to find the vertex with minimum key
     // value, from the set of vertices not yet included in MST
+    // can be improved using priority queue
     private int minKey(double key[], Boolean mstSet[])
     {
         // Initialize min value
-        double min = Integer.MAX_VALUE;
+        double min = Double.MAX_VALUE;
         int min_index=-1;
 
         for (int v = 0; v < V; v++)
@@ -25,11 +27,13 @@ public class MST
 
         return min_index;
     }
+
     // Function to construct and print MST for a graph represented
-    //  using adjacency matrix representation
-    int[] primMST(double graph[][])
+    //  using adjacency matrix representation is converted to array list representation
+    int[] primMST(ArrayList<ArrayList<Double>> graph)
     {
-        V = graph.length;
+        //size of graph is the total number of nodes in the graph
+        V = graph.size();
         // Array to store constructed MST
         int parent[] = new int[V];
 
@@ -42,16 +46,15 @@ public class MST
         // Initialize all keys as INFINITE
         for (int i = 0; i < V; i++)
         {
-            key[i] = Double.MAX_VALUE;
+            key[i] = Double.MAX_VALUE;//sort of infinite value.This means the max value of integer in java
             mstSet[i] = false;
         }
 
         // Always include first 1st vertex in MST.
-        key[0] = 0.0;     // Make key 0 so that this vertex is
-        // picked as first vertex
+        key[0] = 0.0;     // Make key 0 so that this vertex is picked as first vertex
         parent[0] = -1; // First node is always root of MST
 
-        // The MST will have V vertices
+        // The MST will have V vertices and 1 vertex is already present in parent so we need to run only V-1 times
         for (int count = 0; count < V-1; count++)
         {
             // Pick thd minimum key vertex from the set of vertices
@@ -69,14 +72,13 @@ public class MST
                 // graph[u][v] is non zero only for adjacent vertices of m
                 // mstSet[v] is false for vertices not yet included in MST
                 // Update the key only if graph[u][v] is smaller than key[v]
-                if (graph[u][v]>=0 && !mstSet[v] &&
-                        graph[u][v] <  key[v])
-                {
+                // the following statement effectively gets the vertex in mstSet which is closest to u
+                if (graph.get(u).get(v)>=0 && !mstSet[v] && graph.get(u).get(v) <  key[v]){
                     parent[v]  = u;
-                    key[v] = graph[u][v];
+                    key[v] = graph.get(u).get(v);
                 }
         }
         return parent;
     }
 }
-// This code is contributed by Aakash Hasija
+// This code is contributed by Aakash Hasija and modified by Harman Singh

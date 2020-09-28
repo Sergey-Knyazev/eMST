@@ -7,6 +7,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
 
 @CommandLine.Command(name = "nn", mixinStandardHelpOptions = true, version = "0.0")
 public class Main implements Runnable{
@@ -28,7 +29,8 @@ public class Main implements Runnable{
             Tuple2<HashMap<String, Integer>, HashMap<Integer, String>> nodes = get_node_indices(edges);
             HashMap<String, Integer> node_indices = nodes._1;
             HashMap<Integer, String> node_names = nodes._2;
-            double[][] graph = get_distance_matrix(edges, node_indices);
+            // double[][] graph = get_distance_matrix(edges, node_indices);
+            ArrayList<ArrayList<Double>> graph = get_distance_graph(edges, node_indices);
             List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph, epsilon);
             export_graph(nng, graph, node_names, outputFile);
         }
@@ -40,7 +42,7 @@ public class Main implements Runnable{
     public static void main(String[] args) {
         CommandLine.run(new Main(), System.out, args);
     }
-    private static List<HashSet<Integer>> build_nearest_neighbour_graph(double[][] graph, double epsilon) {
+    private static List<HashSet<Integer>> build_nearest_neighbour_graph(ArrayList<ArrayList<Double>> graph, double epsilon) {
         MST t = new MST();
         int[] mst_parents = t.primMST(graph);
         NearestNeighbourGraph g = new NearestNeighbourGraph();
@@ -66,27 +68,32 @@ public class Main implements Runnable{
         }
         return new Tuple2<HashMap<String, Integer>, HashMap<Integer, String>>(node_indices, node_names);
     }
-    private static double[][] get_distance_matrix(List<String[]> edges, HashMap<String, Integer> node_indices) {
-        double[][] distance_matrix = new double[node_indices.size()][node_indices.size()];
-        for(int i=0; i<distance_matrix.length; ++i)
-            for(int j=0; j<distance_matrix.length; ++j)
-                distance_matrix[i][j] = -1.0;
+    private static ArrayList<ArrayList<Double>> get_distance_graph(List<String[]> edges, HashMap<String, Integer> node_indices) {
+        ArrayList<ArrayList<Double>> distance_graph = new ArrayList<ArrayList<Double>>(node_indices.size());
+        for(int i=0; i<node_indices.size(); ++i){
+            ArrayList<Double> alist = new ArrayList<>(node_indices.size());
+            for(int j=0; j<node_indices.size(); ++j)
+                alist.add(-1.0);
+            distance_graph.add(alist);
+        }
+        //now we have the distance matrix in the form of arraylists 
         for(String[] a: edges) {
             int u = node_indices.get(a[0]);
             int v = node_indices.get(a[1]);
             double dist = Double.parseDouble(a[2]);
-            distance_matrix[u][v] = distance_matrix[v][u] = dist;
+            distance_graph.get(u).set(v, dist);
+            distance_graph.get(v).set(u, dist);
         }
-        return distance_matrix;
+        return distance_graph;
     }
-    private static void export_graph(List<HashSet<Integer>> adj_list, double[][] graph,
+    private static void export_graph(List<HashSet<Integer>> adj_list, ArrayList<ArrayList<Double>> graph,
                                      HashMap<Integer, String> node_names,
                                      File file_name) throws FileNotFoundException {
         PrintWriter f = new PrintWriter(file_name);
         f.println("Source,Target,Dist");
         for(int i=0; i<adj_list.size(); ++i)
             for (int j : adj_list.get(i))
-                if (i < j) f.println(String.format("%s,%s,%f", node_names.get(i), node_names.get(j), graph[i][j]));
+                if (i < j) f.println(String.format("%s,%s,%f", node_names.get(i), node_names.get(j), graph.get(i).get(j)));
         f.close();
     }
 }

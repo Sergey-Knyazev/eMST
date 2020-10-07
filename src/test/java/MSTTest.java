@@ -8,7 +8,7 @@ class MSTTest {
     
     @Test
     void primMST() {
-        MST m = new MST();
+        MST_list m = new MST_list();
         // double[][] a =
         //         {{-1, 2,-1, 6,-1},
         //          { 2,-1, 3, 8, 5},

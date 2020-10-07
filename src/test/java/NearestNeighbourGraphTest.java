@@ -24,7 +24,7 @@ class NearestNeighbourGraphTest {
                 //         {-1, 5, 7, 9, -1},      //       d-----e
                 // };                              //          9
         int[] b = {-1, 0, 1, 0, 1};     //MST
-        NearestNeighbourGraph c = new NearestNeighbourGraph();
+        NearestNeighbourGraph_list c = new NearestNeighbourGraph_list();
         List<HashSet<Integer>> d = new ArrayList<HashSet<Integer>>();
         d.add(new HashSet<Integer>());
         for (int i = 1; i < b.length; ++i) {
@@ -54,7 +54,7 @@ class NearestNeighbourGraphTest {
 
     @Test
     void nearest_neighbour_graph2() {
-        NearestNeighbourGraph c = new NearestNeighbourGraph();
+        NearestNeighbourGraph_list c = new NearestNeighbourGraph_list();
         // double[][] f =
         //         {{-1, 1, 2,-1},
         //          { 1,-1,-1, 2},

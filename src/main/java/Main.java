@@ -22,6 +22,10 @@ public class Main implements Runnable{
             description="epsilon - an edge will be added in nn if its weight is only 1+e times greater than needed",
             paramLabel = "e")
     private double epsilon = 0.0;
+    @CommandLine.Option(names={"-a", "--algorithm"},
+            description="algorithm - whether to use matrices(a=0) or Lists(a=1)",
+            paramLabel = "a")
+    private int algorithm = 1;
 
     public void run() {
         try {
@@ -30,9 +34,17 @@ public class Main implements Runnable{
             HashMap<String, Integer> node_indices = nodes._1;
             HashMap<Integer, String> node_names = nodes._2;
             // double[][] graph = get_distance_matrix(edges, node_indices);
-            ArrayList<ArrayList<Double>> graph = get_distance_graph(edges, node_indices);
-            List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph, epsilon);
-            export_graph(nng, graph, node_names, outputFile);
+            if(algorithm == 0){
+                NearestNeighbourGraph_matrix g = new NearestNeighbourGraph_matrix();
+                g.make_eMST(edges, node_indices, node_names, epsilon, outputFile);
+                System.out.println("You're using the matrix algorithm(a=0)");
+            }
+            else{
+                NearestNeighbourGraph_list g = new NearestNeighbourGraph_list();
+                g.make_eMST(edges, node_indices, node_names, epsilon, outputFile);
+                System.out.println("You're using the list algorithm(a=1)");
+            }
+
         }
         catch(FileNotFoundException e) {
             e.printStackTrace();
@@ -41,12 +53,6 @@ public class Main implements Runnable{
 
     public static void main(String[] args) {
         CommandLine.run(new Main(), System.out, args);
-    }
-    private static List<HashSet<Integer>> build_nearest_neighbour_graph(ArrayList<ArrayList<Double>> graph, double epsilon) {
-        MST t = new MST();
-        int[] mst_parents = t.primMST(graph);
-        NearestNeighbourGraph g = new NearestNeighbourGraph();
-        return g.nearest_neighbour_graph(graph, mst_parents, epsilon);
     }
     private static List<String[]> load_edges(File file_name) throws FileNotFoundException{
         CsvParserSettings settings= new CsvParserSettings();
@@ -68,32 +74,5 @@ public class Main implements Runnable{
         }
         return new Tuple2<HashMap<String, Integer>, HashMap<Integer, String>>(node_indices, node_names);
     }
-    private static ArrayList<ArrayList<Double>> get_distance_graph(List<String[]> edges, HashMap<String, Integer> node_indices) {
-        ArrayList<ArrayList<Double>> distance_graph = new ArrayList<ArrayList<Double>>(node_indices.size());
-        for(int i=0; i<node_indices.size(); ++i){
-            ArrayList<Double> alist = new ArrayList<>(node_indices.size());
-            for(int j=0; j<node_indices.size(); ++j)
-                alist.add(-1.0);
-            distance_graph.add(alist);
-        }
-        //now we have the distance matrix in the form of arraylists 
-        for(String[] a: edges) {
-            int u = node_indices.get(a[0]);
-            int v = node_indices.get(a[1]);
-            double dist = Double.parseDouble(a[2]);
-            distance_graph.get(u).set(v, dist);
-            distance_graph.get(v).set(u, dist);
-        }
-        return distance_graph;
-    }
-    private static void export_graph(List<HashSet<Integer>> adj_list, ArrayList<ArrayList<Double>> graph,
-                                     HashMap<Integer, String> node_names,
-                                     File file_name) throws FileNotFoundException {
-        PrintWriter f = new PrintWriter(file_name);
-        f.println("Source,Target,Dist");
-        for(int i=0; i<adj_list.size(); ++i)
-            for (int j : adj_list.get(i))
-                if (i < j) f.println(String.format("%s,%s,%f", node_names.get(i), node_names.get(j), graph.get(i).get(j)));
-        f.close();
-    }
+
 }

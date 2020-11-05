@@ -1,6 +1,8 @@
 import java.io.*;
 import java.util.*;
 
+import io.vavr.Tuple2;
+
 interface nng_strategy{
     public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File outputFile);
 }
@@ -204,4 +206,153 @@ class NearestNeighbourGraph_list implements nng_strategy{
                 if (i < j) f.println(String.format("%s,%s,%f", node_names.get(i), node_names.get(j), graph.get(i).get(j)));
         f.close();
     }
+}
+
+class NearestNeighbourGraph_fasta{
+
+    private int V = 0;
+
+
+    public void make_eMST(double epsilon, File outputFile, File alnfile){
+
+        try {
+            HashMap<Integer, String> node_seqnames = get_node_seqnames(alnfile);
+            HashMap<Integer, Seq> node_sequences = get_node_sequences(alnfile);
+            buildandexport_nearest_neighbour_graph(node_sequences, node_seqnames, epsilon, outputFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+    private HashMap<Integer, String> get_node_seqnames(File alnFile) throws FileNotFoundException{
+        
+        Scanner sc = new Scanner(alnFile);
+
+        HashMap<Integer, String> seqs = new HashMap<Integer, String>();
+        String name="", seq="";
+        while(sc.hasNextLine()) {
+            String line = sc.nextLine().trim();
+            if(line.length() == 0) continue;
+            if(line.charAt(0)=='>') {
+                if (name.length()!=0) seqs.put(seqs.size(), name);
+                name = line.substring(1);
+                seq="";
+            }
+            else seq=seq.concat(line);
+        }
+        if(name.length()!=0) seqs.put(seqs.size(), name);
+        
+        sc.close();
+
+        return seqs;
+
+    }
+    private HashMap<Integer, Seq> get_node_sequences(File alnFile) throws FileNotFoundException{
+        
+        Scanner sc = new Scanner(alnFile);
+
+        HashMap<Integer, Seq> seqs = new HashMap<Integer, Seq>();
+        String name="", seq="";
+        while(sc.hasNextLine()) {
+            String line = sc.nextLine().trim();
+            if(line.length() == 0) continue;
+            if(line.charAt(0)=='>') {
+                if (name.length()!=0) seqs.put(seqs.size(), new Seq(name, seq));
+                name = line.substring(1);
+                seq="";
+            }
+            else seq=seq.concat(line);
+        }
+        if(name.length()!=0) seqs.put(seqs.size(), new Seq(name, seq));
+        
+        sc.close();
+
+        return seqs;
+
+    }
+    public void nearest_neighbour_graph(HashMap<Integer, Seq> node_sequences, HashMap<Integer, String> node_seqnames, int[] mst_parents, double epsilon, File outputFile) throws FileNotFoundException{
+        V = node_sequences.size();
+        // build mst
+        List<HashSet<Integer>> mst = new ArrayList<HashSet<Integer>>();
+        for(int i=0; i<V; ++i)
+            mst.add(new HashSet<Integer>());
+
+        for(int i=1; i<V; ++i) {
+            mst.get(i).add(mst_parents[i]);
+            mst.get(mst_parents[i]).add(i);
+        }
+
+        PrintWriter f = new PrintWriter(outputFile);
+        f.print("Source,Target,Dist\n");
+        f.close();
+
+        for(int i=0; i<V; ++i){
+            System.out.println(i);
+            ArrayList<Double> longest_edges = new ArrayList<Double>();
+            for(int j=0; j<V; j++){
+                longest_edges.add(0.0);
+            }
+            bfs_update_longedges(i, mst, longest_edges, node_sequences);
+
+            for(int j=0; j<V;j++){
+
+                double dist_i_j = tn93_distance(i, j, node_sequences);
+
+                // if(node_seqnames.get(i).equals("Switzerland/VD0503/2020") && node_seqnames.get(j).equals("Switzerland/BE2536/2020")){
+                //     System.out.println("yes I got it - i = " + i + "j = " + j + "dist = " + dist_i_j + "longestedge = " + longest_edges.get(j));
+                // }
+
+                // System.out.println(dist_i_j + "," + longest_edges.get(j));
+                if(dist_i_j > 0 && dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
+                    write_edge(i, j, node_seqnames, dist_i_j, outputFile);
+                }
+            }
+
+        }
+    }
+
+    private void write_edge(int i, int j, HashMap<Integer, String> node_seqnames, double distance, File file_name){
+        try {
+            FileWriter f = new FileWriter(file_name, true);
+            // if(node_seqnames.get(i).equals("Switzerland/VD0503/2020") && node_seqnames.get(j).equals("Switzerland/BE2536/2020")){
+            //     System.out.println("yes I got it - i = " + i + "j = " + j + "dist = " + distance);
+            // }
+            if (i < j){
+                f.write(String.format("%s,%s,%f\n", node_seqnames.get(i), node_seqnames.get(j), distance));
+            }
+            f.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+    private void bfs_update_longedges(int root, List<HashSet<Integer>> mst, ArrayList<Double> longest_edges, HashMap<Integer, Seq> node_sequences) {
+        
+        boolean[] visited = new boolean[V]; //False by default
+        Queue<Integer> queue = new LinkedList<Integer>();
+        queue.add(root);
+        while(!queue.isEmpty()) {
+            int v = queue.remove();
+            visited[v] = true;
+            for(Integer u: mst.get(v)) {
+                if(visited[u]) continue;
+                queue.add(u);
+                longest_edges.set(u, Math.max(tn93_distance(u, v, node_sequences), Math.max(longest_edges.get(u), longest_edges.get(v))));
+                // longest_edge.get(u).set(root, Math.max(weights.get(v).get(u), Math.max(longest_edge.get(root).get(u), longest_edge.get(root).get(v))));
+            }
+        }
+    }
+    private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){
+
+        Seq s1 = node_sequences.get(u);
+        Seq s2 = node_sequences.get(v);
+        return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
+    }
+    private void buildandexport_nearest_neighbour_graph(HashMap<Integer, Seq> node_sequences, HashMap<Integer, String> node_seqnames, double epsilon,
+            File outputFile) throws FileNotFoundException{
+        MST_fasta t = new MST_fasta();
+        int[] mst_parents = t.primMST(node_sequences);
+        nearest_neighbour_graph(node_sequences, node_seqnames, mst_parents, epsilon, outputFile);
+    }
+
 }

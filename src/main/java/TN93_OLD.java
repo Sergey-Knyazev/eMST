@@ -7,7 +7,7 @@ import java.util.Observable;
 
 import static java.lang.Math.log;
 
-public class TN93 extends Observable {
+public class TN93_OLD extends Observable {
     private static final double TN_93_MAX_DIST = 1000.;
     private float edgeThreshold = 1000;
     private File inputFile;
@@ -31,13 +31,12 @@ public class TN93 extends Observable {
         PrintWriter f = null;
         try {
             LinkedList<Seq> seqs = read_fasta(inputFile);
-            // System.out.print(String.format("%d% numseq ", seqs.size()));
             double[][] dist = tn93(seqs);
             f = new PrintWriter(outputFile);
             f.println("Source,Target,Dist");
             for (int i = 0; i < dist.length; ++i) {
-                for (int j = 0; j < dist.length ; ++j) {
-                    if (dist[i][j] <= edgeThreshold && j>i) f.println(
+                for (int j = 0; j < dist.length; ++j) {
+                    if (dist[i][j] <= edgeThreshold && i!=j) f.println(
                             String.format("%s,%s,%.11f", seqs.get(i).getName(), seqs.get(j).getName(), dist[i][j]));
                 }
             }
@@ -58,16 +57,15 @@ public class TN93 extends Observable {
         for (int i = 0; i < dist.length; ++i) {
             for (int j = 0; j < i; ++j) {
                 current_pair++;
-                // the following code just causes error for small number of sequences and is also not required
-                // if(current_pair % (pairs_count/100) == 0) {
-                //     estimatedTime = System.nanoTime() - startTime;
-                //     int percCompleted = current_pair*100/pairs_count;
-                //     System.out.print(String.format("%d%% completed for ", percCompleted));
-                //     System.out.print(TimeUnit.SECONDS.convert(estimatedTime, TimeUnit.NANOSECONDS));
-                //     System.out.println(" sec");
-                //     setChanged();
-                //     notifyObservers(percCompleted);
-                // }
+                if(current_pair % (pairs_count/100) == 0) {
+                    estimatedTime = System.nanoTime() - startTime;
+                    int percCompleted = current_pair*100/pairs_count;
+                    System.out.print(String.format("%d%% completed for ", percCompleted));
+                    System.out.print(TimeUnit.SECONDS.convert(estimatedTime, TimeUnit.NANOSECONDS));
+                    System.out.println(" sec");
+                    setChanged();
+                    notifyObservers(percCompleted);
+                }
                 dist[i][j] = dist[j][i] = tn93(seqs.get(i).getSeq_enc(), seqs.get(j).getSeq_enc());
             }
         }
@@ -99,31 +97,29 @@ public class TN93 extends Observable {
         double p2 = (double) nucl_pair_count[Seq.C][Seq.T]/total_non_gap;
         double q = ((double) nucl_pair_count[Seq.A][Seq.C]+nucl_pair_count[Seq.A][Seq.T]+nucl_pair_count[Seq.C][Seq.G]+
                 nucl_pair_count[Seq.G][Seq.T])/total_non_gap;
-        
         double g_r = nucl_freq[Seq.A]+nucl_freq[Seq.G];
         double g_y = nucl_freq[Seq.C]+nucl_freq[Seq.T];
-
         boolean useK2P = false;
         for(int i=0; i<4; ++i) if (nucl_freq[i] == 0) useK2P = true;
 
         double k_ag = nucl_freq[Seq.A]*nucl_freq[Seq.G]/g_r;
         double k_tc = nucl_freq[Seq.T]*nucl_freq[Seq.C]/g_y;
-        double k_ry = (g_r*g_y - nucl_freq[Seq.A]*nucl_freq[Seq.G]*g_y/g_r - nucl_freq[Seq.T]*nucl_freq[Seq.C]*g_r/g_y);
+        double k_ry = g_r*g_y;
 
         double dist;
 
         if(useK2P) {
             double l1 = 1.-2.*(p1+p2)-q;
             double l2 = 1.-2.*q;
-            if(l1>0.&&l2>0.) dist = log(l1)/2-log(l2)/4;
+            if(l1>0.&&l2>0.) dist = log(p1)/2-log(p2)/4;
             else dist=TN_93_MAX_DIST;
         }
         else {
             double l_ag = 1.-p1/(2*k_ag)-q/(2*g_r);
             double l_tc = 1.-p2/(2*k_tc)-q/(2*g_y);
-            double l_ry = 1.-(1/2)*(q/g_y/g_r);
+            double l_ry = 1.-q/(2*k_ry);
             if(l_ag>0. && l_tc>0. && l_ry>0.)
-                dist=-2.*k_ag*log(l_ag)-2.*k_tc*log(l_tc)-2.*(k_ry)*log(l_ry);
+                dist=-2.*k_ag*log(l_ag)-2.*k_tc*log(l_tc)-2.*(k_ry-k_ag*g_y-k_tc*g_r)*log(l_ry);
             else dist=TN_93_MAX_DIST;
         }
         return dist <= 0. ? 0. : (seqlen * dist);

@@ -3,6 +3,14 @@ import com.univocity.parsers.csv.CsvParser;
 import io.vavr.Tuple2;
 import picocli.CommandLine;
 
+// import org.jgrapht.*;
+// import org.jgrapht.graph.*;
+// import org.jgrapht.nio.*;
+// import org.jgrapht.nio.dot.*;
+// import org.jgrapht.traverse.*;
+// import org.jgrapht.alg.connectivity.*;
+
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,17 +36,14 @@ public class Main implements Runnable{
     private int algorithm = 1;
 
     public void run() {
+
+        
+
         try {
 
             // double[][] graph = get_distance_matrix(edges, node_indices);
             if(algorithm == 0){
                 System.out.println("You're using the matrix algorithm(a=0)");
-
-                // TN93 testobj = new TN93();
-                // testobj.setInputFile(inputFile);
-                // File file = new File("./outputTN93test.csv");
-                // testobj.setOutputFile(file);
-                // testobj.tn93Fasta();
 
                 List<String[]> edges = load_edges(inputFile);
                 Tuple2<HashMap<String, Integer>, HashMap<Integer, String>> nodes = get_node_indices(edges);
@@ -51,30 +56,126 @@ public class Main implements Runnable{
             else if(algorithm == 1){
                 System.out.println("You're using the list algorithm(a=1)");
 
+                // List<String[]> all_edges = load_edges(inputFile);
+                // Tuple2<HashMap<String, Integer>, HashMap<Integer, String>> all_nodes = get_node_indices(all_edges);
+                // HashMap<String, Integer> all_node_indices = all_nodes._1;
+                // HashMap<Integer, String> all_node_names = all_nodes._2;
+
+                // Make a list of list of edges, ie each component of the graph will be a lius tof edge and all components will be a part of a single list
+                // List<List<String[]>> edges_multi_components = get_multiple_components(all_edges, all_node_indices, all_node_names);
+                
+                // for(List<String[]> comp_edges: edges_multi_components){
+
                 List<String[]> edges = load_edges(inputFile);
+
+                // Tuple2<HashMap<String, Integer>, HashMap<Integer, String>> nodes = get_node_indices(comp_edges);
                 Tuple2<HashMap<String, Integer>, HashMap<Integer, String>> nodes = get_node_indices(edges);
                 HashMap<String, Integer> node_indices = nodes._1;
                 HashMap<Integer, String> node_names = nodes._2;
 
                 NearestNeighbourGraph_list g = new NearestNeighbourGraph_list();
+                // g.make_eMST(comp_edges, node_indices, node_names, epsilon, outputFile);
                 g.make_eMST(edges, node_indices, node_names, epsilon, outputFile);
+
+                // }
             }
-            else{
+            else if(algorithm == 2){
                 NearestNeighbourGraph_fasta g = new NearestNeighbourGraph_fasta();
                 System.out.println("You're inputting a fasta file and using the on-the-fly algorithm(a=2)");
                 g.make_eMST(epsilon, outputFile, inputFile);
             }
-
+            else if(algorithm == 3){
+                TN93 testobj = new TN93();
+                testobj.setInputFile(inputFile);
+                // File file = new File("./outputTN93test.csv");
+                testobj.setOutputFile(outputFile);
+                testobj.tn93Fasta();
+            }
 
         }
         catch(FileNotFoundException e) {
             e.printStackTrace();
         }
     }
-
+    
     public static void main(String[] args) {
         CommandLine.run(new Main(), System.out, args);
     }
+
+    // private static List<List<String[]>> get_multiple_components(List<String[]> edges, HashMap<String, Integer> node_indices, HashMap<Integer, String> node_names){
+
+    //     ArrayList<ArrayList<Double>> full_graph = get_full_distance_graph(edges, node_indices);
+    //     List<List<String[]>> multi_component_graph = connectedComponents(full_graph, node_names);
+
+    //     return multi_component_graph;
+
+    // }
+    // private static List<List<String[]>> DFSUtil(int v, boolean[] visited, ArrayList<ArrayList<Double>> full_graph, HashMap<Integer, String> node_names, List<String[]> component)
+    // {
+    //     // Mark the current node as visited and print it
+    //     visited[v] = true;
+    //     System.out.print(v + " ");
+    //     // Recur for all the vertices
+    //     // adjacent to this vertex
+    //     for (int x : full_graph.get(v)) {
+    //         if (!visited[x])
+
+    //             component = DFSUtil(x, visited, full_graph, node_names, component);
+    //     }
+
+    //     return component;
+    // }
+    // private static List<List<String[]>> connectedComponents(ArrayList<ArrayList<Double>> full_graph, HashMap<Integer, String> node_names)
+    // {
+    //     List<List<String[]>> multi_component_graph = new ArrayList<List<String[]>>();
+    //     // Mark all the vertices as not visited
+    //     boolean[] visited = new boolean[node_names.size()];
+    //     for (int v = 0; v < V; ++v) {
+    //         if (!visited[v]) {
+    //             List<String[]> component_v = new ArrayList<String[]>();
+    //             // print all reachable vertices
+    //             // from v
+    //             List<String[]> component = DFSUtil(v, visited, full_graph, node_names, component_v);
+    //             // System.out.println();
+    //             multi_component_graph.add(component_v);
+
+    //         }
+    //     }
+
+    //     return multi_component_graph;
+    // }
+
+
+
+    // ***********************************************
+
+
+
+    // private void get_graph_string(List<HashSet<Integer>> adj_list, ArrayList<ArrayList<Double>> graph, HashMap<Integer, String> node_names){
+    //     for(int i=0; i<adj_list.size(); ++i)
+    //         for (int j : adj_list.get(i))
+    //             if (i < j) f.println(String.format("%s,%s,%f", node_names.get(i), node_names.get(j), graph.get(i).get(j)));
+    // }
+
+    private static ArrayList<ArrayList<Double>> get_full_distance_graph(List<String[]> edges, HashMap<String, Integer> node_indices) {
+        ArrayList<ArrayList<Double>> distance_graph = new ArrayList<ArrayList<Double>>(node_indices.size());
+        for(int i=0; i<node_indices.size(); ++i){
+            ArrayList<Double> alist = new ArrayList<>(node_indices.size());
+            for(int j=0; j<node_indices.size(); ++j)
+                alist.add(-1.0);
+            distance_graph.add(alist);
+        }
+        //now we have the distance matrix in the form of arraylists 
+        for(String[] a: edges) {
+            int u = node_indices.get(a[0]);
+            int v = node_indices.get(a[1]);
+            double dist = Double.parseDouble(a[2]);
+            distance_graph.get(u).set(v, dist);
+            distance_graph.get(v).set(u, dist);
+        }
+        return distance_graph;
+    }
+
     private static List<String[]> load_edges(File file_name) throws FileNotFoundException{
         CsvParserSettings settings= new CsvParserSettings();
         settings.getFormat().setLineSeparator("\n");

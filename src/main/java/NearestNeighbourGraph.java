@@ -108,13 +108,32 @@ class NearestNeighbourGraph_list implements nng_strategy{
 
     public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File outputFile){
             ArrayList<ArrayList<Double>> graph = get_distance_graph(edges, node_indices);
-            List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph, epsilon);
-            try{
-                export_graph(nng, graph, node_names, outputFile);
+            // ArrayList<ArrayList<Integer>> graph_node_connectivity = get_node_con_graph(edges, node_indices);
+
+            // Make a graph object haviong the graph in adjacency list format, node_indices and node_names.
+            Graph multi_comp_graph = new Graph(graph, node_indices, node_names);
+            // get the connected components of the Graph object
+            ConnectedComponents conn_comp_obj = new ConnectedComponents();
+            List<Graph> graph_connected_components = conn_comp_obj.getConnectedComponents(multi_comp_graph);
+
+            // NOTE: What can be done is to shift some functionss from this file(NNG class) to graph class
+            for(Graph graph_subcomponent: graph_connected_components){
+                List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph_subcomponent.get_graph(), epsilon);
+                try{
+                    export_graph(nng, graph_subcomponent.get_graph(), graph_subcomponent.get_node_names(), outputFile);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
+
+            // List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph, epsilon);
+            // try{
+            //     export_graph(nng, graph, node_names, outputFile);
+            // }
+            // catch (Exception e) {
+            //     e.printStackTrace();
+            // }
             
     }
 
@@ -199,8 +218,10 @@ class NearestNeighbourGraph_list implements nng_strategy{
     private void export_graph(List<HashSet<Integer>> adj_list, ArrayList<ArrayList<Double>> graph,
                                      HashMap<Integer, String> node_names,
                                      File file_name) throws FileNotFoundException {
-        PrintWriter f = new PrintWriter(file_name);
-        f.println("Source,Target,Dist");
+        PrintWriter f = new PrintWriter(new FileOutputStream(file_name,true));
+        if(file_name.length()==0){
+            f.println("Source,Target,Dist");
+        }
         for(int i=0; i<adj_list.size(); ++i)
             for (int j : adj_list.get(i))
                 if (i < j) f.println(String.format("%s,%s,%f", node_names.get(i), node_names.get(j), graph.get(i).get(j)));

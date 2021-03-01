@@ -21,11 +21,11 @@ import java.util.ArrayList;
 public class Main implements Runnable{
     @CommandLine.Option(names={"-i", "--inFile"}, description="input file with edges in CSV format or fasta file(will work only if a=2)",
             paramLabel = "FILE", required=true)
-    private File inputFile = new File("out.csv");
+    private File inputFile = new File("infile.defaultfile");
     @CommandLine.Option(names={"-o", "--outFile"},
             description="output file with edges of nearest neighbour graph in CSV format",
-            paramLabel = "FILE", required=true)
-    private File outputFile = new File("out.csv");
+            paramLabel = "FILE")
+    private File outputFile = new File("outfile.defaultfile");
     @CommandLine.Option(names={"-e", "--epsilon"},
             description="epsilon - an edge will be added in nn if its weight is only 1+e times greater than needed",
             paramLabel = "e")

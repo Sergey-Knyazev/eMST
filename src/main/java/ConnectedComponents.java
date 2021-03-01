@@ -2,6 +2,7 @@ import java.util.*;
 
 class ConnectedComponents {
 
+
     public List<Graph> getConnectedComponents(Graph graph){
         ArrayList<ArrayList<Double>> full_graph = graph.get_graph();
         HashMap<String, Integer> full_node_indices = graph.get_node_indices();
@@ -20,6 +21,13 @@ class ConnectedComponents {
 
         return multi_component_graph;
 
+    }
+
+    public int numberOfConnecedComponents(Graph graph){
+
+        List<Graph> multi_component_graph = getConnectedComponents(graph);
+        int num_components = multi_component_graph.size();
+        return num_components;
     }
 
     private static Graph BFS(int v, boolean[] visited, ArrayList<ArrayList<Double>> full_graph, HashMap<Integer, String> node_names, HashMap<String, Integer> node_indices)

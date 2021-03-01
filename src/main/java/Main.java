@@ -31,7 +31,7 @@ public class Main implements Runnable{
             paramLabel = "e")
     private double epsilon = 0.0;
     @CommandLine.Option(names={"-a", "--algorithm"},
-            description="algorithm - whether to use matrices(a=0) or Lists(a=1) or on-the-fly-algo(a=2)",
+            description="algorithm - whether to use matrices(a=0), Lists(a=1), on-the-fly-algo(a=2), or print the number of components in the graph(a=4)",
             paramLabel = "a")
     private int algorithm = 1;
 
@@ -85,6 +85,23 @@ public class Main implements Runnable{
                 g.make_eMST(epsilon, outputFile, inputFile);
             }
             else if(algorithm == 3){
+
+                // returns the number of connected components in the graph
+
+                List<String[]> edges = load_edges(inputFile);
+                Tuple2<HashMap<String, Integer>, HashMap<Integer, String>> nodes = get_node_indices(edges);
+                HashMap<String, Integer> node_indices = nodes._1;
+                HashMap<Integer, String> node_names = nodes._2;
+
+                ArrayList<ArrayList<Double>> graph = get_distance_graph(edges, node_indices);
+                Graph multi_comp_graph = new Graph(graph, node_indices, node_names);
+                // get the number of connected components of the Graph object
+                ConnectedComponents conn_comp_obj = new ConnectedComponents();
+                int num_components = conn_comp_obj.numberOfConnecedComponents(multi_comp_graph);
+
+                System.out.println(num_components);
+            }
+            else if(algorithm == 4){
                 TN93 testobj = new TN93();
                 testobj.setInputFile(inputFile);
                 // File file = new File("./outputTN93test.csv");
@@ -197,4 +214,22 @@ public class Main implements Runnable{
         return new Tuple2<HashMap<String, Integer>, HashMap<Integer, String>>(node_indices, node_names);
     }
 
+    private static ArrayList<ArrayList<Double>> get_distance_graph(List<String[]> edges, HashMap<String, Integer> node_indices) {
+        ArrayList<ArrayList<Double>> distance_graph = new ArrayList<ArrayList<Double>>(node_indices.size());
+        for(int i=0; i<node_indices.size(); ++i){
+            ArrayList<Double> alist = new ArrayList<>(node_indices.size());
+            for(int j=0; j<node_indices.size(); ++j)
+                alist.add(-1.0);
+            distance_graph.add(alist);
+        }
+        //now we have the distance matrix in the form of arraylists 
+        for(String[] a: edges) {
+            int u = node_indices.get(a[0]);
+            int v = node_indices.get(a[1]);
+            double dist = Double.parseDouble(a[2]);
+            distance_graph.get(u).set(v, dist);
+            distance_graph.get(v).set(u, dist);
+        }
+        return distance_graph;
+    }
 }

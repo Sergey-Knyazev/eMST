@@ -1,0 +1,13 @@
+Source,Target,Dist
+a,b,1
+b,c,0.113499
+d,e,0.113499
+e,f,1000.000000
+a,t,1000.000000
+w,x,9
+k,l,8
+q,p,3
+k,o,8
+w,abcd,10
+p,y,7
+y,m,1

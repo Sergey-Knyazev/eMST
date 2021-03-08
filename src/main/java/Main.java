@@ -31,7 +31,7 @@ public class Main implements Runnable{
             paramLabel = "e")
     private double epsilon = 0.0;
     @CommandLine.Option(names={"-a", "--algorithm"},
-            description="algorithm - whether to use matrices(a=0), Lists(a=1), on-the-fly-algo(a=2), or print the number of components in the graph(a=4)",
+            description="algorithm - whether to use matrices(a=0), Lists(a=1), on-the-fly-algo(a=2), print the number of components in the graph(a=3), or calculate the pairwise hamming distances file(a=4)",
             paramLabel = "a")
     private int algorithm = 1;
 
@@ -102,6 +102,13 @@ public class Main implements Runnable{
                 System.out.println(num_components);
             }
             else if(algorithm == 4){
+                Ham_dist testobj = new Ham_dist();
+                testobj.setInputFile(inputFile);
+                // File file = new File("./outputTN93test.csv");
+                testobj.setOutputFile(outputFile);
+                testobj.hammingFasta();
+            }
+            else if(algorithm == 5){
                 TN93 testobj = new TN93();
                 testobj.setInputFile(inputFile);
                 // File file = new File("./outputTN93test.csv");

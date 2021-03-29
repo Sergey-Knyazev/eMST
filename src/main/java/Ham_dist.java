@@ -8,7 +8,7 @@ import java.util.Observable;
 import static java.lang.Math.log;
 
 public class Ham_dist extends Observable {
-    private float edgeThreshold = 1000;
+    private float edgeThreshold = 10000;
     private File inputFile;
     private File outputFile;
     

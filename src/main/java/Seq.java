@@ -12,6 +12,15 @@ public class Seq {
         nucl.put('T', T);
         nucl.put('N', N);
     }
+    static Map<Integer, Character> inv_nucl;
+    static {
+        inv_nucl = new HashMap<Integer, Character>();
+        inv_nucl.put(A, 'A');
+        inv_nucl.put(C, 'C');
+        inv_nucl.put(G, 'G');
+        inv_nucl.put(T, 'T');
+        inv_nucl.put(N, 'N');
+    }
 
     private String name;
     private String seq;
@@ -36,5 +45,21 @@ public class Seq {
 
     public int[] getSeq_enc() {
         return seq_enc;
+    }
+
+    public int get_seq_len(){
+        return seq_enc.length;
+    }
+
+    public void set_seq_enc(int[] seq_enc){
+        this.seq_enc = seq_enc;
+    }
+
+    public void set_sequence(){
+        this.seq = "";
+        for(int i=0;i<get_seq_len();++i) {
+            int base_num = this.seq_enc[i];
+            this.seq = this.seq + inv_nucl.get(base_num);
+        }
     }
 }

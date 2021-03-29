@@ -185,7 +185,7 @@ class MST_fasta{
 
     // Function to construct and print MST for a graph represented
     //  using adjacency matrix representation is converted to array list representation
-    int[] primMST(HashMap<Integer, Seq> node_sequences)
+    int[] primMST(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences)
     {
         //size of graph is the total number of nodes in the graph
         V = node_sequences.size();
@@ -229,7 +229,9 @@ class MST_fasta{
                 // mstSet[v] is false for vertices not yet included in MST
                 // Update the key only if graph[u][v] is smaller than key[v]
                 // the following statement effectively gets the vertex in mstSet which is closest to u
-                dist = tn93_distance(u, v, node_sequences);
+                
+                // calculate the hamming distance using arrays having difference from consensus
+                dist = distance_hamming_using_consensus(u, v, diff_consensus, node_sequences);
                 if (dist >=0 && !mstSet[v] && dist <  key[v]){
                     parent[v]  = u;
                     key[v] = dist;
@@ -239,11 +241,52 @@ class MST_fasta{
         return parent;
     }
 
-    private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){
+    private double distance_hamming_using_consensus(int u, int v, HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences){
+        ArrayList<Integer> diff_1 = diff_consensus.get(u);
+        ArrayList<Integer> diff_2 = diff_consensus.get(v);
 
-        Seq s1 = node_sequences.get(u);
-        Seq s2 = node_sequences.get(v);
-        return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
+        Seq seq_1 = node_sequences.get(u);
+        Seq seq_2 = node_sequences.get(v);
+
+        double hamdist = 0;
+
+        int i=0;
+        int j=0;
+        // get distance using diff_1, diff_2 and node_sequences(which will be used when 2 numbers are same in the diff arrays, to check is the bas pairs are same or not at that place)
+        while(i<diff_1.size() && j<diff_2.size()){
+            if(diff_1.get(i)<diff_2.get(j)){
+                i++;
+                hamdist++;
+            }
+            else if(diff_1.get(i)>diff_2.get(j)){
+                j++;
+                hamdist++;
+            }
+            else{
+                //positions of dissimilarity with consensus is same so we have to check if the base pairs are different or same at this position
+                if(seq_1.getSeq_enc()[diff_1.get(i)] != seq_2.getSeq_enc()[diff_2.get(j)]){
+                    hamdist++;
+                }
+                i++;
+                j++;
+            }
+        }
+
+        if(i==diff_1.size()){
+            hamdist+=(diff_2.size()-j);
+        }
+        else{
+            hamdist+=(diff_1.size()-i);
+        }
+
+        return hamdist;
     }
+
+    // private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){
+
+    //     Seq s1 = node_sequences.get(u);
+    //     Seq s2 = node_sequences.get(v);
+    //     return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
+    // }
 }
 // This code is contributed by Aakash Hasija and modified by Harman Singh

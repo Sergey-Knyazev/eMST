@@ -57,7 +57,7 @@ class MST_matrix{
         // The MST will have V vertices
         for (int count = 0; count < V-1; count++)
         {
-            // Pick thd minimum key vertex from the set of vertices
+            // Pick the minimum key vertex from the set of vertices
             // not yet included in MST
             int u = minKey(key, mstSet);
 

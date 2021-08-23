@@ -34,10 +34,12 @@ public class Main implements Runnable{
             description="algorithm - whether to use matrices(a=0), Lists(a=1), on-the-fly-algo(a=2), print the number of components in the graph(a=3), or calculate the pairwise hamming distances file(a=4)",
             paramLabel = "a")
     private int algorithm = 1;
+    @CommandLine.Option(names={"-d", "--distance"},
+            description="distance - Hamming distance(d=1) [default] , TN93(d=2)",
+            paramLabel = "d")
+    private int distance_metric = 1;
 
     public void run() {
-
-        
 
         try {
 
@@ -82,7 +84,7 @@ public class Main implements Runnable{
             else if(algorithm == 2){
                 NearestNeighbourGraph_fasta g = new NearestNeighbourGraph_fasta();
                 System.out.println("You're inputting a fasta file and using the on-the-fly algorithm(a=2)");
-                g.make_eMST(epsilon, outputFile, inputFile);
+                g.make_eMST(epsilon, outputFile, inputFile, distance_metric);
             }
             else if(algorithm == 3){
 

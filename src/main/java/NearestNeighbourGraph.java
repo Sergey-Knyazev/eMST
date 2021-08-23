@@ -55,6 +55,8 @@ class NearestNeighbourGraph_matrix implements nng_strategy{
         }
         return nng;
     }
+
+    
     private void bfs_update_matrix(List<HashSet<Integer>> mst, double[][] weights, int root, double[][] longest_edge) {
         boolean[] visited = new boolean[V];
         Queue<Integer> queue = new LinkedList<Integer>();
@@ -234,7 +236,7 @@ class NearestNeighbourGraph_fasta{
     private int V = 0;
     private int edgeThreshold = 10000;
 
-    public void make_eMST(double epsilon, File outputFile, File alnfile){
+    public void make_eMST(double epsilon, File outputFile, File alnfile, int dist_metric){
 
         try {
             HashMap<Integer, String> node_seqnames = get_node_seqnames(alnfile);
@@ -247,7 +249,7 @@ class NearestNeighbourGraph_fasta{
             Seq consensus = get_consensus_strain(node_sequences);
             HashMap<Integer, ArrayList<Integer>> diff_consensus = get_diff_consensus(node_sequences, consensus);
             
-            buildandexport_nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, epsilon, outputFile);
+            buildandexport_nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, epsilon, outputFile, dist_metric);
         
         } catch (Exception e) {
             e.printStackTrace();
@@ -256,8 +258,7 @@ class NearestNeighbourGraph_fasta{
     }
 
     private HashMap<Integer, ArrayList<Integer>> get_diff_consensus(HashMap<Integer, Seq> sequences, Seq consensus){
-        
-        //the hashmap storing the poitions of differences of each sequence from the consensus
+        // Return a hashmap of positions where each sequence differs from the consensus
         HashMap<Integer, ArrayList<Integer>> diff_consensus = new HashMap<Integer, ArrayList<Integer>>();
 
         int[] consensus_seqenc = consensus.getSeq_enc();
@@ -279,27 +280,30 @@ class NearestNeighbourGraph_fasta{
     }
 
     private Seq get_consensus_strain(HashMap<Integer, Seq> sequences){
+        /*
+            Creates a consensus sequence from the input sequences.
+            Assumes sequences are equal length.
+        */
         int seqlen = sequences.get(0).get_seq_len();
         ArrayList<ArrayList<Integer>> counts = new ArrayList<ArrayList<Integer>>(seqlen);
         for(int i = 0; i<seqlen; i++){
-            // if(i%1000 == 0){
-            //     System.out.println(i);
-            // }
-            ArrayList<Integer> base_count = new ArrayList<Integer>(5);
+            // Initialize a nucleotide counter for each position. 
+            ArrayList<Integer> base_count = new ArrayList<Integer>(5); // len({A,C,T,G,N}) = 5
             for(int j=0; j<5; j++){
-                base_count.add(0);
+                base_count.add(0); //initialization
             }
-            counts.add(base_count);//5 because we have to keep track of counts of all 4 base pairs + 1(N) and then make a consensus at the end
+            counts.add(base_count);
         }
+        // Count number of nucleotide occurences for each position
         for(Map.Entry<Integer,Seq> entry : sequences.entrySet()){
             int[] seq = entry.getValue().getSeq_enc();
             for(int i = 0; i<seq.length; i++){
-                //seq[i] is the i'th base pair -1,2,3 or 4 and if its for eg 2 then we have to update the counts apropriately
+                // increment appropriate nucleotide counter for i'th position
                 int newval = counts.get(i).get(seq[i])+1;
                 counts.get(i).set(seq[i], newval);
             }
         }
-        //we have the counts now select the max number base pair for all positions of the genome
+        //Create consensus seq using max occuring nucleotide at each position.
         int[] consensus = new int[seqlen];
         for(int i = 0; i<seqlen; i++){
             consensus[i] = counts.get(i).indexOf(Collections.max(counts.get(i)));
@@ -357,7 +361,7 @@ class NearestNeighbourGraph_fasta{
         return seqs;
 
     }
-    public void nearest_neighbour_graph(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, HashMap<Integer, String> node_seqnames, int[] mst_parents, double epsilon, File outputFile) throws FileNotFoundException{
+    public void nearest_neighbour_graph(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, HashMap<Integer, String> node_seqnames, int[] mst_parents, double epsilon, File outputFile, int dist_metric) throws FileNotFoundException{
         V = node_sequences.size();
         // build mst
         List<HashSet<Integer>> mst = new ArrayList<HashSet<Integer>>();
@@ -382,9 +386,13 @@ class NearestNeighbourGraph_fasta{
             bfs_update_longedges(i, mst, longest_edges, diff_consensus, node_sequences);
 
             for(int j=0; j<V;j++){
-
-                double dist_i_j = distance_hamming_using_consensus(i, j, diff_consensus, node_sequences);
-
+                double dist_i_j = 0.0;
+                if (dist_metric == 1){
+                    dist_i_j = distance_hamming_using_consensus(i, j, diff_consensus, node_sequences);
+                }
+                else{
+                    dist_i_j = tn93_distance(i, j, node_sequences);
+                }
                 // if(node_seqnames.get(i).equals("Switzerland/VD0503/2020") && node_seqnames.get(j).equals("Switzerland/BE2536/2020")){
                 //     System.out.println("yes I got it - i = " + i + "j = " + j + "dist = " + dist_i_j + "longestedge = " + longest_edges.get(j));
                 // }
@@ -471,17 +479,17 @@ class NearestNeighbourGraph_fasta{
         return hamdist;
     }
 
-    // private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){
+    private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){
 
-    //     Seq s1 = node_sequences.get(u);
-    //     Seq s2 = node_sequences.get(v);
-    //     return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
-    // }
+        Seq s1 = node_sequences.get(u);
+        Seq s2 = node_sequences.get(v);
+        return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
+    }
     private void buildandexport_nearest_neighbour_graph(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, HashMap<Integer, String> node_seqnames, double epsilon,
-            File outputFile) throws FileNotFoundException{
+            File outputFile, int dist_metric) throws FileNotFoundException{
         MST_fasta t = new MST_fasta();
         int[] mst_parents = t.primMST(diff_consensus, node_sequences);
-        nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, mst_parents, epsilon, outputFile);
+        nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, mst_parents, epsilon, outputFile, dist_metric);
     }
 
 }

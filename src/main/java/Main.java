@@ -2,6 +2,7 @@ import com.univocity.parsers.csv.CsvParserSettings;
 import com.univocity.parsers.csv.CsvParser;
 import io.vavr.Tuple2;
 import picocli.CommandLine;
+import TN93.TN93;
 
 // import org.jgrapht.*;
 // import org.jgrapht.graph.*;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
+
 
 @CommandLine.Command(name = "nn", mixinStandardHelpOptions = true, version = "0.0")
 public class Main implements Runnable{
@@ -35,7 +37,7 @@ public class Main implements Runnable{
             paramLabel = "a")
     private int algorithm = 1;
     @CommandLine.Option(names={"-d", "--distance"},
-            description="distance - Hamming distance(d=1) [default] , TN93(d=2)",
+            description="distance - Hamming distance(d=1) [default], TN93(d=1)",
             paramLabel = "d")
     private int distance_metric = 1;
 

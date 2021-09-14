@@ -3,6 +3,8 @@ import java.util.*;
 
 import io.vavr.Tuple2;
 
+import TN93.*;
+
 interface nng_strategy{
     public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File outputFile);
 }
@@ -246,11 +248,16 @@ class NearestNeighbourGraph_fasta{
             // change from all other sequeces and store it in anotehr hashmap node_diff_consensus<Integer, ArrayList<Integer>>, 
             // then into the build and export function, pass node_seqnames as before, node_diff_consensus, epsilon and outputfile as before
             
-            Seq consensus = get_consensus_strain(node_sequences);
-            HashMap<Integer, ArrayList<Integer>> diff_consensus = get_diff_consensus(node_sequences, consensus);
-            
-            buildandexport_nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, epsilon, outputFile, dist_metric);
-        
+            if (dist_metric == 0) {
+                Seq consensus = get_consensus_strain(node_sequences);
+                HashMap<Integer, ArrayList<Integer>> diff_consensus = get_diff_consensus(node_sequences, consensus);
+                buildandexport_nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, epsilon, outputFile, dist_metric);
+            }
+            else {
+                //Use Tn93
+                buildandexport_nearest_neighbour_graph(new HashMap<Integer, ArrayList<Integer>>(), node_sequences, node_seqnames, epsilon, outputFile, dist_metric);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -383,16 +390,15 @@ class NearestNeighbourGraph_fasta{
             for(int j=0; j<V; j++){
                 longest_edges.add(0.0);
             }
-            bfs_update_longedges(i, mst, longest_edges, diff_consensus, node_sequences);
+            bfs_update_longedges(i, mst, longest_edges, diff_consensus, node_sequences, dist_metric);
 
             for(int j=0; j<V;j++){
                 double dist_i_j = 0.0;
-                if (dist_metric == 1){
+                if (dist_metric == 0)
                     dist_i_j = distance_hamming_using_consensus(i, j, diff_consensus, node_sequences);
-                }
-                else{
+                else
                     dist_i_j = tn93_distance(i, j, node_sequences);
-                }
+                
                 // if(node_seqnames.get(i).equals("Switzerland/VD0503/2020") && node_seqnames.get(j).equals("Switzerland/BE2536/2020")){
                 //     System.out.println("yes I got it - i = " + i + "j = " + j + "dist = " + dist_i_j + "longestedge = " + longest_edges.get(j));
                 // }
@@ -421,7 +427,7 @@ class NearestNeighbourGraph_fasta{
         }
 
     }
-    private void bfs_update_longedges(int root, List<HashSet<Integer>> mst, ArrayList<Double> longest_edges, HashMap<Integer,ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences) {
+    private void bfs_update_longedges(int root, List<HashSet<Integer>> mst, ArrayList<Double> longest_edges, HashMap<Integer,ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, int dist_metric) {
         
         boolean[] visited = new boolean[V]; //False by default
         Queue<Integer> queue = new LinkedList<Integer>();
@@ -432,7 +438,12 @@ class NearestNeighbourGraph_fasta{
             for(Integer u: mst.get(v)) {
                 if(visited[u]) continue;
                 queue.add(u);
-                longest_edges.set(u, Math.max(distance_hamming_using_consensus(u, v, diff_consensus, node_sequences), Math.max(longest_edges.get(u), longest_edges.get(v))));
+                double uv_dist = 0;
+                if (dist_metric == 0) 
+                    uv_dist = distance_hamming_using_consensus(u, v, diff_consensus, node_sequences);
+                else
+                    uv_dist = tn93_distance(u, v, node_sequences);
+                longest_edges.set(u, Math.max(uv_dist, Math.max(longest_edges.get(u), longest_edges.get(v))));
                 // longest_edge.get(u).set(root, Math.max(weights.get(v).get(u), Math.max(longest_edge.get(root).get(u), longest_edge.get(root).get(v))));
             }
         }
@@ -480,7 +491,7 @@ class NearestNeighbourGraph_fasta{
     }
 
     private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){
-
+        //TN93 tn93 = new TN93();
         Seq s1 = node_sequences.get(u);
         Seq s2 = node_sequences.get(v);
         return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
@@ -488,7 +499,7 @@ class NearestNeighbourGraph_fasta{
     private void buildandexport_nearest_neighbour_graph(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, HashMap<Integer, String> node_seqnames, double epsilon,
             File outputFile, int dist_metric) throws FileNotFoundException{
         MST_fasta t = new MST_fasta();
-        int[] mst_parents = t.primMST(diff_consensus, node_sequences);
+        int[] mst_parents = t.primMST(diff_consensus, node_sequences, dist_metric);
         nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, mst_parents, epsilon, outputFile, dist_metric);
     }
 

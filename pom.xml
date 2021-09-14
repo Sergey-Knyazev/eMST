@@ -48,6 +48,13 @@
             <artifactId>picocli</artifactId>
             <version>3.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>tn93</groupId>
+            <artifactId>tn93</artifactId>
+            <version>1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/tn93.jar</systemPath>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -71,8 +78,18 @@
                 <configuration>
                     <finalName>nn</finalName>
                     <archive>
+                        <manifestEntries>
+                            <Build-Jdk>${jdk.version}</Build-Jdk>
+                            <Implementation-Title>${project.name}</Implementation-Title>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Specification-Title>${project.name} Library</Specification-Title>
+                            <Specification-Version>${project.version}</Specification-Version>
+                            <Class-Path>libs/tn93.jar</Class-Path>
+                        </manifestEntries>
                         <manifest>
+                            <addClasspath>true</addClasspath>
                             <mainClass>Main</mainClass>
+                            <classpathPrefix>libs/</classpathPrefix>
                         </manifest>
                     </archive>
                     <descriptorRefs>

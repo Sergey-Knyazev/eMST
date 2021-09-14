@@ -6,6 +6,8 @@ import java.util.ArrayList;
 
 import java.util.HashMap;
 
+import TN93.*;
+
 
 class MST_matrix{
     // Number of vertices in the graph
@@ -185,7 +187,7 @@ class MST_fasta{
 
     // Function to construct and print MST for a graph represented
     //  using adjacency matrix representation is converted to array list representation
-    int[] primMST(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences)
+    int[] primMST(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, int dist_metric)
     {
         //size of graph is the total number of nodes in the graph
         V = node_sequences.size();
@@ -231,7 +233,10 @@ class MST_fasta{
                 // the following statement effectively gets the vertex in mstSet which is closest to u
                 
                 // calculate the hamming distance using arrays having difference from consensus
-                dist = distance_hamming_using_consensus(u, v, diff_consensus, node_sequences);
+                if (dist_metric == 0)
+                    dist = distance_hamming_using_consensus(u, v, diff_consensus, node_sequences);
+                else
+                    dist = tn93_distance(u, v, node_sequences);
                 if (dist >=0 && !mstSet[v] && dist <  key[v]){
                     parent[v]  = u;
                     key[v] = dist;
@@ -280,6 +285,13 @@ class MST_fasta{
         }
 
         return hamdist;
+    }
+
+    private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){
+        //TN93 tn93 = new TN93();
+        Seq s1 = node_sequences.get(u);
+        Seq s2 = node_sequences.get(v);
+        return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
     }
 
     // private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){

@@ -32,6 +32,10 @@ public class Main implements Runnable{
             description="epsilon - an edge will be added in nn if its weight is only 1+e times greater than needed",
             paramLabel = "e")
     private double epsilon = 0.0;
+    @CommandLine.Option(names={"-t", "--threshold"},
+    description="threshold - remove all edges with length > threshold.",
+    paramLabel = "t")
+    private double edge_threshold = -1.0;   
     @CommandLine.Option(names={"-a", "--algorithm"},
             description="algorithm - whether to use matrices(a=0), Lists(a=1), on-the-fly-algo(a=2), print the number of components in the graph(a=3), or calculate the pairwise hamming distances file(a=4)",
             paramLabel = "a")
@@ -86,7 +90,7 @@ public class Main implements Runnable{
             else if(algorithm == 2){
                 NearestNeighbourGraph_fasta g = new NearestNeighbourGraph_fasta();
                 System.out.println("You're inputting a fasta file and using the on-the-fly algorithm(a=2)");
-                g.make_eMST(epsilon, outputFile, inputFile, distance_metric);
+                g.make_eMST(epsilon, outputFile, inputFile, distance_metric, edge_threshold);
             }
             else if(algorithm == 3){
 

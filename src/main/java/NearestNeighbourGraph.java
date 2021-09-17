@@ -6,7 +6,7 @@ import io.vavr.Tuple2;
 import TN93.*;
 
 interface nng_strategy{
-    public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File outputFile);
+    public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File output_file);
 }
 
 
@@ -14,11 +14,11 @@ class NearestNeighbourGraph_matrix implements nng_strategy{
     // The variable stores the number of nodes in the graph
     private int V = 0;
 
-    public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File outputFile){
+    public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File output_file){
         double[][] graph = get_distance_matrix(edges, node_indices);
         List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph, epsilon);
         try{
-            export_graph(nng, graph, node_names, outputFile);
+            export_graph(nng, graph, node_names, output_file);
             }
         catch (Exception e) {
                 e.printStackTrace();
@@ -110,7 +110,7 @@ class NearestNeighbourGraph_list implements nng_strategy{
     // The variable stores the number of nodes in the graph
     private int V = 0;
 
-    public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File outputFile){
+    public void make_eMST(List<String[]>edges, HashMap<String, Integer>node_indices, HashMap<Integer, String>node_names, double epsilon, File output_file){
             ArrayList<ArrayList<Double>> graph = get_distance_graph(edges, node_indices);
             // ArrayList<ArrayList<Integer>> graph_node_connectivity = get_node_con_graph(edges, node_indices);
 
@@ -124,7 +124,7 @@ class NearestNeighbourGraph_list implements nng_strategy{
             for(Graph graph_subcomponent: graph_connected_components){
                 List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph_subcomponent.get_graph(), epsilon);
                 try{
-                    export_graph(nng, graph_subcomponent.get_graph(), graph_subcomponent.get_node_names(), outputFile);
+                    export_graph(nng, graph_subcomponent.get_graph(), graph_subcomponent.get_node_names(), output_file);
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -133,7 +133,7 @@ class NearestNeighbourGraph_list implements nng_strategy{
 
             // List<HashSet<Integer>> nng = build_nearest_neighbour_graph(graph, epsilon);
             // try{
-            //     export_graph(nng, graph, node_names, outputFile);
+            //     export_graph(nng, graph, node_names, output_file);
             // }
             // catch (Exception e) {
             //     e.printStackTrace();
@@ -237,7 +237,7 @@ class NearestNeighbourGraph_fasta{
 
     private int V = 0;
 
-    public void make_eMST(double epsilon, File outputFile, File alnfile, int dist_metric, double edge_threshold){
+    public void make_eMST(double epsilon, File output_file, File alnfile, int dist_metric, double edge_threshold){
 
         try {
             HashMap<Integer, String> node_seqnames = get_node_seqnames(alnfile);
@@ -245,16 +245,16 @@ class NearestNeighbourGraph_fasta{
             
             // TODO: get consensus using node_sequences hashmap, find positions of 
             // change from all other sequeces and store it in anotehr hashmap node_diff_consensus<Integer, ArrayList<Integer>>, 
-            // then into the build and export function, pass node_seqnames as before, node_diff_consensus, epsilon and outputfile as before
+            // then into the build and export function, pass node_seqnames as before, node_diff_consensus, epsilon and output_file as before
             
             if (dist_metric == 0) {
                 Seq consensus = get_consensus_strain(node_sequences);
                 HashMap<Integer, ArrayList<Integer>> diff_consensus = get_diff_consensus(node_sequences, consensus);
-                buildandexport_nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, epsilon, outputFile, dist_metric, edge_threshold);
+                buildandexport_nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, epsilon, output_file, dist_metric, edge_threshold);
             }
             else {
                 //Use Tn93
-                buildandexport_nearest_neighbour_graph(new HashMap<Integer, ArrayList<Integer>>(), node_sequences, node_seqnames, epsilon, outputFile, dist_metric, edge_threshold);
+                buildandexport_nearest_neighbour_graph(new HashMap<Integer, ArrayList<Integer>>(), node_sequences, node_seqnames, epsilon, output_file, dist_metric, edge_threshold);
             }
 
         } catch (Exception e) {
@@ -369,10 +369,17 @@ class NearestNeighbourGraph_fasta{
 
     }
 
-    public void nearest_neighbour_graph(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences,
-     HashMap<Integer, String> node_seqnames, int[] mst_parents, double epsilon, File outputFile,
-      int dist_metric, double edge_threshold) throws FileNotFoundException{
+    public void nearest_neighbour_graph(HashMap<Integer, ArrayList<Integer>> diff_consensus,
+    HashMap<Integer, Seq> node_sequences,
+    HashMap<Integer, String> node_seqnames,
+    int[] mst_parents,
+    double epsilon,
+    File output_file,
+    int dist_metric,
+    double edge_threshold) throws FileNotFoundException{
+
         V = node_sequences.size();
+        ArrayList<ArrayList<String>> edges = new ArrayList<ArrayList<String>>();
         // build mst
         List<HashSet<Integer>> mst = new ArrayList<HashSet<Integer>>();
         for(int i=0; i<V; ++i)
@@ -382,14 +389,10 @@ class NearestNeighbourGraph_fasta{
             mst.get(i).add(mst_parents[i]);
             mst.get(mst_parents[i]).add(i);
         }
-        //TODO: This needs to be seperated out
-        PrintWriter f = new PrintWriter(outputFile);
-        f.print("Source,Target,Dist\n");
-        f.close();
 
         for(int i=0; i<V; ++i){
-            System.out.println(i);
-
+            if (i < 1000 || i > V-1000 || i % 1000 == 0 )
+                System.out.print(String.valueOf(i + 1) + "\r");
             //TODO: These lines can be inside the bfs_longedges function, which should RETURN longest_edges instead of updating.
             ArrayList<Double> longest_edges = new ArrayList<Double>();
             for(int j=0; j<V; j++){
@@ -406,28 +409,38 @@ class NearestNeighbourGraph_fasta{
 
                 //if(dist_i_j > 0 && dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
                 if(dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
-                    write_edge(i, j, node_seqnames, dist_i_j, outputFile, edge_threshold);
+                    if (dist_i_j < edge_threshold) {
+                        add_edge(edges, i, j, dist_i_j,  node_seqnames);
+                    }
                 }
             }
-
         }
+        write_edges(edges, output_file);
     }
 
-    private void write_edge(int i, int j, HashMap<Integer, String> node_seqnames, double distance, File file_name, double edge_threshold){
+    private void write_edges(ArrayList<ArrayList<String>> edges, File output_file){
+
         try {
-            FileWriter f = new FileWriter(file_name, true);
-            // if(node_seqnames.get(i).equals("Switzerland/VD0503/2020") && node_seqnames.get(j).equals("Switzerland/BE2536/2020")){
-            //     System.out.println("yes I got it - i = " + i + "j = " + j + "dist = " + distance);
-            // }
-            if (i < j && distance<edge_threshold){
-                f.write(String.format("%s,%s,%f\n", node_seqnames.get(i), node_seqnames.get(j), distance));
-            }
+            FileWriter f = new FileWriter(output_file, true);
+            f.write("Source,Target,Dist\n");
+
+            for (ArrayList<String> edge : edges) 
+                f.write(String.format("%s,%s,%s\n", edge.get(0), edge.get(1), edge.get(2)));
+                
             f.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
+    private void add_edge(ArrayList<ArrayList<String>> edges, int i, int j, double distance, HashMap<Integer, String> node_seqnames){
+        ArrayList<String> edge = new ArrayList<String>(3);
+        edge.add(String.valueOf(node_seqnames.get(i)));
+        edge.add(String.valueOf(node_seqnames.get(j)));
+        edge.add(String.valueOf(distance));
+        edges.add(edge);
+    }
+
     private void bfs_update_longedges(int root, List<HashSet<Integer>> mst, ArrayList<Double> longest_edges, HashMap<Integer,ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, int dist_metric) {
         
         boolean[] visited = new boolean[V]; //False by default
@@ -498,13 +511,10 @@ class NearestNeighbourGraph_fasta{
         return TN93.tn93(s1.getSeq_enc(), s2.getSeq_enc());
     }
     private void buildandexport_nearest_neighbour_graph(HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, HashMap<Integer, String> node_seqnames, double epsilon,
-            File outputFile, int dist_metric, double edge_threshold) throws FileNotFoundException{
+            File output_file, int dist_metric, double edge_threshold) throws FileNotFoundException{
         MST_fasta t = new MST_fasta();
         int[] mst_parents = t.primMST(diff_consensus, node_sequences, dist_metric);
-        for(int i:mst_parents)
-            System.out.println(i);
-        System.out.println(mst_parents.length);
-        nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, mst_parents, epsilon, outputFile, dist_metric, edge_threshold);
+        nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, mst_parents, epsilon, output_file, dist_metric, edge_threshold);
     }
 
 }

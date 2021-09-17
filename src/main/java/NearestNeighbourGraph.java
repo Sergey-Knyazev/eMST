@@ -232,7 +232,7 @@ class NearestNeighbourGraph_list implements nng_strategy{
         f.close();
     }
 }
-
+//TODO: Make this class polymorphic (TN93/Hamming)
 class NearestNeighbourGraph_fasta{
 
     private int V = 0;
@@ -382,13 +382,15 @@ class NearestNeighbourGraph_fasta{
             mst.get(i).add(mst_parents[i]);
             mst.get(mst_parents[i]).add(i);
         }
-
+        //TODO: This needs to be seperated out
         PrintWriter f = new PrintWriter(outputFile);
         f.print("Source,Target,Dist\n");
         f.close();
 
         for(int i=0; i<V; ++i){
             System.out.println(i);
+
+            //TODO: These lines can be inside the bfs_longedges function, which should RETURN longest_edges instead of updating.
             ArrayList<Double> longest_edges = new ArrayList<Double>();
             for(int j=0; j<V; j++){
                 longest_edges.add(0.0);
@@ -401,13 +403,9 @@ class NearestNeighbourGraph_fasta{
                     dist_i_j = distance_hamming_using_consensus(i, j, diff_consensus, node_sequences);
                 else
                     dist_i_j = tn93_distance(i, j, node_sequences);
-                
-                // if(node_seqnames.get(i).equals("Switzerland/VD0503/2020") && node_seqnames.get(j).equals("Switzerland/BE2536/2020")){
-                //     System.out.println("yes I got it - i = " + i + "j = " + j + "dist = " + dist_i_j + "longestedge = " + longest_edges.get(j));
-                // }
 
-                // System.out.println(dist_i_j + "," + longest_edges.get(j));
-                if(dist_i_j > 0 && dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
+                //if(dist_i_j > 0 && dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
+                if(dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
                     write_edge(i, j, node_seqnames, dist_i_j, outputFile, edge_threshold);
                 }
             }
@@ -503,6 +501,9 @@ class NearestNeighbourGraph_fasta{
             File outputFile, int dist_metric, double edge_threshold) throws FileNotFoundException{
         MST_fasta t = new MST_fasta();
         int[] mst_parents = t.primMST(diff_consensus, node_sequences, dist_metric);
+        for(int i:mst_parents)
+            System.out.println(i);
+        System.out.println(mst_parents.length);
         nearest_neighbour_graph(diff_consensus, node_sequences, node_seqnames, mst_parents, epsilon, outputFile, dist_metric, edge_threshold);
     }
 

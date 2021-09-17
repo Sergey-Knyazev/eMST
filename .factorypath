@@ -1,0 +1,7 @@
+<factorypath>
+    <factorypathentry kind="VARJAR" id="M2_REPO/com/univocity/univocity-parsers/2.7.5/univocity-parsers-2.7.5.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="VARJAR" id="M2_REPO/io/vavr/vavr/0.9.2/vavr-0.9.2.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="VARJAR" id="M2_REPO/io/vavr/vavr-match/0.9.2/vavr-match-0.9.2.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="VARJAR" id="M2_REPO/info/picocli/picocli/3.6.0/picocli-3.6.0.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="EXTJAR" id="J:\Workspace\9_8_21\eMST\libs\tn93.jar" enabled="true" runInBatchMode="false"/>
+</factorypath>

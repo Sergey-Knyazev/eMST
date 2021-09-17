@@ -35,15 +35,15 @@ public class Main implements Runnable{
     @CommandLine.Option(names={"-t", "--threshold"},
     description="threshold - remove all edges with length > threshold.",
     paramLabel = "t")
-    private double edge_threshold = -1.0;   
+    private double edge_threshold = 1.0;   //TODO: Future, use -1 to specify infinity
     @CommandLine.Option(names={"-a", "--algorithm"},
             description="algorithm - whether to use matrices(a=0), Lists(a=1), on-the-fly-algo(a=2), print the number of components in the graph(a=3), or calculate the pairwise hamming distances file(a=4)",
-            paramLabel = "a")
-    private int algorithm = 1;
+            paramLabel = "a") //TODO: Program shuold decide this on its own
+    private int algorithm = 2;
     @CommandLine.Option(names={"-d", "--distance"},
-            description="distance - Hamming distance(d=1) [default], TN93(d=1)",
+            description="distance - Hamming distance(d=0) [default], TN93(d=1)",
             paramLabel = "d")
-    private int distance_metric = 1;
+    private int distance_metric = 1; //When using Hamming distance, the threshold needs to be relative to length of genomes (Ham_dist/length)
 
     public void run() {
 
@@ -88,6 +88,7 @@ public class Main implements Runnable{
                 // }
             }
             else if(algorithm == 2){
+                //TODO: Instantiate correct class for distance metric here
                 NearestNeighbourGraph_fasta g = new NearestNeighbourGraph_fasta();
                 System.out.println("You're inputting a fasta file and using the on-the-fly algorithm(a=2)");
                 g.make_eMST(epsilon, outputFile, inputFile, distance_metric, edge_threshold);

@@ -403,11 +403,9 @@ class NearestNeighbourGraph_fasta{
             for(int j=0; j<V;j++){
                 double dist_i_j = 0.0;
                 if (dist_metric == 0) {
-                    System.out.println("hamming");
                     dist_i_j = distance_hamming_using_consensus(i, j, diff_consensus, node_sequences);
                 }
                 else if (dist_metric == 1) {
-                    System.out.println("TN93");
                     dist_i_j = tn93_distance(i, j, node_sequences);
                 }
                 else {

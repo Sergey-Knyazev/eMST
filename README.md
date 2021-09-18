@@ -1,4 +1,4 @@
-## etMSF
+## etMSN
 
 Originally called eMST, etMSN is a generalization to GHOST and HIV-Trace genomic network analysis tools.  
 The tool creates an etMSN for a graph. It accepts edge list, distance matrix, or fasta file as an input. Then implements filtering and outputs etMSN as edge list.

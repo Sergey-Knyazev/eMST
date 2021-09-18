@@ -402,11 +402,17 @@ class NearestNeighbourGraph_fasta{
 
             for(int j=0; j<V;j++){
                 double dist_i_j = 0.0;
-                if (dist_metric == 0)
+                if (dist_metric == 0) {
+                    System.out.println("hamming");
                     dist_i_j = distance_hamming_using_consensus(i, j, diff_consensus, node_sequences);
-                else
+                }
+                else if (dist_metric == 1) {
+                    System.out.println("TN93");
                     dist_i_j = tn93_distance(i, j, node_sequences);
-
+                }
+                else {
+                    throw new UnsupportedOperationException();
+                }
                 //if(dist_i_j > 0 && dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
                 if(dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
                     if (dist_i_j < edge_threshold) {
@@ -421,7 +427,7 @@ class NearestNeighbourGraph_fasta{
     private void write_edges(ArrayList<ArrayList<String>> edges, File output_file){
 
         try {
-            FileWriter f = new FileWriter(output_file, true);
+            FileWriter f = new FileWriter(output_file);
             f.write("Source,Target,Dist\n");
 
             for (ArrayList<String> edge : edges) 
@@ -434,11 +440,13 @@ class NearestNeighbourGraph_fasta{
 
     }
     private void add_edge(ArrayList<ArrayList<String>> edges, int i, int j, double distance, HashMap<Integer, String> node_seqnames){
-        ArrayList<String> edge = new ArrayList<String>(3);
-        edge.add(String.valueOf(node_seqnames.get(i)));
-        edge.add(String.valueOf(node_seqnames.get(j)));
-        edge.add(String.valueOf(distance));
-        edges.add(edge);
+        if (i < j){ //ensures we only add one of (a,b); (b,a)
+            ArrayList<String> edge = new ArrayList<String>(3);
+            edge.add(String.valueOf(node_seqnames.get(i)));
+            edge.add(String.valueOf(node_seqnames.get(j)));
+            edge.add(String.valueOf(distance));
+            edges.add(edge);
+        }
     }
 
     private void bfs_update_longedges(int root, List<HashSet<Integer>> mst, ArrayList<Double> longest_edges, HashMap<Integer,ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, int dist_metric) {

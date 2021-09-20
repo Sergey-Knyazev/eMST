@@ -273,10 +273,15 @@ class NearestNeighbourGraph_fasta{
         for(Map.Entry<Integer,Seq> entry : sequences.entrySet()){
             int[] seq = entry.getValue().getSeq_enc();
             ArrayList<Integer> store_diffs = new ArrayList<Integer>();
-
             for(int i = 0; i<seq.length; i++){
-                if(seq[i]!=consensus_seqenc[i]){
+                if(seq[i]==4){
                     store_diffs.add(i);
+                    // continue;
+                    //TODO: continuing here (consensus filling) vs store_diffs needs to be an option
+                }
+                else
+                if(seq[i]!=consensus_seqenc[i]){
+                        store_diffs.add(i);
                 }
             }
             diff_consensus.put(t, store_diffs);
@@ -291,12 +296,13 @@ class NearestNeighbourGraph_fasta{
             Creates a consensus sequence from the input sequences.
             Assumes sequences are equal length.
         */
+
         int seqlen = sequences.get(0).get_seq_len();
         ArrayList<ArrayList<Integer>> counts = new ArrayList<ArrayList<Integer>>(seqlen);
         for(int i = 0; i<seqlen; i++){
             // Initialize a nucleotide counter for each position. 
-            ArrayList<Integer> base_count = new ArrayList<Integer>(5); // len({A,C,T,G,N}) = 5
-            for(int j=0; j<5; j++){
+            ArrayList<Integer> base_count = new ArrayList<Integer>(4); // len({A,C,T,G,N}) = 5
+            for(int j=0; j<4; j++){
                 base_count.add(0); //initialization
             }
             counts.add(base_count);
@@ -306,10 +312,12 @@ class NearestNeighbourGraph_fasta{
             int[] seq = entry.getValue().getSeq_enc();
             for(int i = 0; i<seq.length; i++){
                 // increment appropriate nucleotide counter for i'th position
+                if(seq[i] == 4) continue;
                 int newval = counts.get(i).get(seq[i])+1;
                 counts.get(i).set(seq[i], newval);
             }
         }
+
         //Create consensus seq using max occuring nucleotide at each position.
         int[] consensus = new int[seqlen];
         for(int i = 0; i<seqlen; i++){
@@ -484,17 +492,25 @@ class NearestNeighbourGraph_fasta{
         // get distance using diff_1, diff_2 and node_sequences(which will be used when 2 numbers are same in the diff arrays, to check is the bas pairs are same or not at that place)
         while(i<diff_1.size() && j<diff_2.size()){
             if(diff_1.get(i)<diff_2.get(j)){
+                if (seq_1.getSeq_enc()[diff_1.get(i)] != 4){
+                    hamdist++;
+                }
                 i++;
-                hamdist++;
             }
             else if(diff_1.get(i)>diff_2.get(j)){
+                if (seq_2.getSeq_enc()[diff_2.get(j)] != 4){
+                    hamdist++;
+                }
                 j++;
-                hamdist++;
             }
             else{
                 //positions of dissimilarity with consensus is same so we have to check if the base pairs are different or same at this position
-                if(seq_1.getSeq_enc()[diff_1.get(i)] != seq_2.getSeq_enc()[diff_2.get(j)]){
-                    hamdist++;
+                int a = seq_1.getSeq_enc()[diff_1.get(i)];
+                int b = seq_2.getSeq_enc()[diff_2.get(j)];
+                if(a != b){
+                    if(a != 4 && b != 4){ //4 == "N" (ambiguity)
+                        hamdist++;
+                    }
                 }
                 i++;
                 j++;
@@ -502,12 +518,22 @@ class NearestNeighbourGraph_fasta{
         }
 
         if(i==diff_1.size()){
-            hamdist+=(diff_2.size()-j);
+            //hamdist+=(diff_2.size()-j);
+            for(int k=j; k < diff_2.size(); k++) {
+                if (seq_2.getSeq_enc()[diff_2.get(j)] != 4){
+                    hamdist++;
+                }
+            }
         }
         else{
-            hamdist+=(diff_1.size()-i);
+           //hamdist+=(diff_1.size()-i);
+           for(int k=i; k < diff_1.size(); k++) {
+            if (seq_1.getSeq_enc()[diff_1.get(i)] != 4){
+                hamdist++;
+            }
         }
 
+        }
         return hamdist/genome_length;
     }
 

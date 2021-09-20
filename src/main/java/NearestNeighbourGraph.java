@@ -236,6 +236,7 @@ class NearestNeighbourGraph_list implements nng_strategy{
 class NearestNeighbourGraph_fasta{
 
     private int V = 0;
+    private int genome_length = 0;
 
     public void make_eMST(double epsilon, File output_file, File alnfile, int dist_metric, double edge_threshold){
 
@@ -378,7 +379,9 @@ class NearestNeighbourGraph_fasta{
     int dist_metric,
     double edge_threshold) throws FileNotFoundException{
 
-        V = node_sequences.size();
+        V = node_sequences.size(); //why use this variable
+        genome_length = node_sequences.get(0).getSeq().length();
+
         ArrayList<ArrayList<String>> edges = new ArrayList<ArrayList<String>>();
         // build mst
         List<HashSet<Integer>> mst = new ArrayList<HashSet<Integer>>();
@@ -389,18 +392,18 @@ class NearestNeighbourGraph_fasta{
             mst.get(i).add(mst_parents[i]);
             mst.get(mst_parents[i]).add(i);
         }
-
-        for(int i=0; i<V; ++i){
-            if (i < 1000 || i > V-1000 || i % 1000 == 0 )
-                System.out.print(String.valueOf(i + 1) + "\r");
+        for(int i=0; i<V-1; ++i){
+            if (i < 1000 || i > V-1000 || (i+1) % 1000 == 0 )
+                System.out.print(String.valueOf(i+1) + "\r");
             //TODO: These lines can be inside the bfs_longedges function, which should RETURN longest_edges instead of updating.
             ArrayList<Double> longest_edges = new ArrayList<Double>();
             for(int j=0; j<V; j++){
                 longest_edges.add(0.0);
             }
+            //TODO: Should be bfs_get_longest_edges
             bfs_update_longedges(i, mst, longest_edges, diff_consensus, node_sequences, dist_metric);
 
-            for(int j=0; j<V;j++){
+            for(int j=i+1; j<V;j++){
                 double dist_i_j = 0.0;
                 if (dist_metric == 0) {
                     dist_i_j = distance_hamming_using_consensus(i, j, diff_consensus, node_sequences);
@@ -411,9 +414,8 @@ class NearestNeighbourGraph_fasta{
                 else {
                     throw new UnsupportedOperationException();
                 }
-                //if(dist_i_j > 0 && dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
                 if(dist_i_j <= (1.0 + epsilon)*longest_edges.get(j)){
-                    if (dist_i_j < edge_threshold) {
+                    if (dist_i_j <= edge_threshold) {
                         add_edge(edges, i, j, dist_i_j,  node_seqnames);
                     }
                 }
@@ -438,13 +440,11 @@ class NearestNeighbourGraph_fasta{
 
     }
     private void add_edge(ArrayList<ArrayList<String>> edges, int i, int j, double distance, HashMap<Integer, String> node_seqnames){
-        if (i < j){ //ensures we only add one of (a,b); (b,a)
-            ArrayList<String> edge = new ArrayList<String>(3);
-            edge.add(String.valueOf(node_seqnames.get(i)));
-            edge.add(String.valueOf(node_seqnames.get(j)));
-            edge.add(String.valueOf(distance));
-            edges.add(edge);
-        }
+        ArrayList<String> edge = new ArrayList<String>(3);
+        edge.add(String.valueOf(node_seqnames.get(i)));
+        edge.add(String.valueOf(node_seqnames.get(j)));
+        edge.add(String.valueOf(distance));
+        edges.add(edge);
     }
 
     private void bfs_update_longedges(int root, List<HashSet<Integer>> mst, ArrayList<Double> longest_edges, HashMap<Integer,ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences, int dist_metric) {
@@ -470,6 +470,7 @@ class NearestNeighbourGraph_fasta{
     }
 
     private double distance_hamming_using_consensus(int u, int v, HashMap<Integer, ArrayList<Integer>> diff_consensus, HashMap<Integer, Seq> node_sequences){
+        //TODO: Skip Ambiguities (n's -'s)
         ArrayList<Integer> diff_1 = diff_consensus.get(u);
         ArrayList<Integer> diff_2 = diff_consensus.get(v);
 
@@ -507,7 +508,7 @@ class NearestNeighbourGraph_fasta{
             hamdist+=(diff_1.size()-i);
         }
 
-        return hamdist;
+        return hamdist/genome_length;
     }
 
     private double tn93_distance(int u, int v, HashMap<Integer, Seq> node_sequences){

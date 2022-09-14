@@ -8,3 +8,5 @@ Having genetic distances between viral samples, we want to build a graph where s
 
 Installation:
 mvn clean install
+
+Please use uppercase ACTG letters in input fasta files.
